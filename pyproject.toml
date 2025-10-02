@@ -1,0 +1,84 @@
+[project]
+name = "repomgr"
+dynamic = ["version"]
+description = "Container Build Automation"
+readme = "README.md"
+authors = [
+    { name = "Michael Minichino", email = "info@unix.us.com" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+keywords = ["docker", "container", "automation"]
+requires-python = ">=3.9,<4"
+dependencies = [
+    "attrs>=21.2.0",
+    "docker>=5.0.3",
+    "requests>=2.25.1",
+    "urllib3>=1.26.5",
+    "Jinja2>=3.0.0",
+    "typer>=0.16.0",
+    "tomli>=2.2.1"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/mminichino/repomgr"
+
+[project.scripts]
+repomgr = "repomgr.repomgr:app"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.1.1",
+    "pytest-asyncio>=0.23.6",
+    "pytest-rerunfailures>=10.3",
+    "pytest-mock>=3.6.1",
+]
+dev = [
+    "hatch",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/repomgr/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/repomgr"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repomgr"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_mode = "auto"
+addopts = "-rE --no-header -v -p no:warnings"
+log_file = "pytest.log"
+log_file_level = "DEBUG"
+pythonpath = [
+    ".",
+    "tests"
+]
+testpaths = [
+    "tests",
+]
+python_classes = [
+    "Test*"
+]
+python_files = [
+    "test_[0-9]*.py"
+]
+markers = [
+    "unit_test: marks a test as a unit test",
+    "regression_test: marks a test as a regression test",
+]

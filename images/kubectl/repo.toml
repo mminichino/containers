@@ -1,0 +1,6 @@
+[github]
+owner = "kubernetes"
+repo = "kubernetes"
+
+[docker]
+repo = "codelry"

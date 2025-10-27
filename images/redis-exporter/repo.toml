@@ -1,0 +1,6 @@
+[github]
+owner = "oliver006"
+repo = "redis_exporter"
+
+[docker]
+repo = "codelry"

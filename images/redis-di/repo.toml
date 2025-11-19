@@ -1,0 +1,7 @@
+[docker]
+repo = "codelry"
+
+[[source]]
+version = "v1.15.0"
+path = "~/Downloads/rdi_install/1.15.0/deps/rdi-cli/ubuntu-20.04/redis-di"
+destination = "/usr/local/bin"

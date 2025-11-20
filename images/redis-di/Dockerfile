@@ -1,9 +1,6 @@
 FROM ubuntu:20.04
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y curl
-
-RUN apt-get update && \
-    apt-get install -y apt-transport-https ca-certificates curl gnupg
+RUN apt-get update && apt-get upgrade -y && apt-get install -y curl apt-transport-https ca-certificates gnupg
 
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | \
@@ -20,6 +17,10 @@ RUN mkdir -p /usr/local/bin
 COPY source/redis-di /usr/local/bin
 COPY source/rdi-setup.sh /usr/local/bin
 
-WORKDIR /root
+RUN groupadd -g 1001 redis && \
+    useradd -u 1001 -m -s /bin/bash -g redis redis
+
+WORKDIR /home/redis
+USER 1001:1001
 
 ENTRYPOINT ["tail", "-f", "/dev/null"]

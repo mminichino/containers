@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-shot Couchbase bootstrap for Docker Compose and Kubernetes init containers.
-# Uses the cbctl CLI from couchbase-connect-py (>=0.4.0).
+# Uses the cbctl CLI from couchbase-connect-py (>=0.5.0).
 set -euo pipefail
 
 log() {
@@ -78,6 +78,7 @@ CBS_CREATE_CLUSTER="${CBS_CREATE_CLUSTER:-true}"
 CBS_BUCKET="${CBS_BUCKET:-}"
 CBS_SCOPE="${CBS_SCOPE:-}"
 CBS_COLLECTION="${CBS_COLLECTION:-}"
+CBS_IMPORT_KEYSPACE="${CBS_IMPORT_KEYSPACE:-}"
 CBS_BUCKET_QUOTA="${CBS_BUCKET_QUOTA:-128}"
 CBS_BUCKET_REPLICAS="${CBS_BUCKET_REPLICAS:-0}"
 # Single-node alternate address (cbctl --alternate-address / #ALTERNATE).
@@ -216,6 +217,15 @@ if [[ -n "${CBS_COLLECTION}" ]]; then
   cbctl collection create "${CBS_COLLECTION}" \
     --bucket "${CBS_BUCKET}" \
     --scope "${CBS_SCOPE}" \
+    --host "${api_host}" \
+    "${common_auth[@]}"
+fi
+
+if [[ -f /import/data.json ]]; then
+  [[ -n "${CBS_IMPORT_KEYSPACE}" ]] || die \
+    "CBS_IMPORT_KEYSPACE is required when /import/data.json exists"
+  log "Importing '/import/data.json' into '${CBS_IMPORT_KEYSPACE}'"
+  cbctl import /import/data.json "${CBS_IMPORT_KEYSPACE}" \
     --host "${api_host}" \
     "${common_auth[@]}"
 fi

@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # One-shot Couchbase bootstrap for Docker Compose and Kubernetes init containers.
-# Uses the cbctl CLI from couchbase-connect-py (>=0.5.0).
+#
+# Uses the Go cbctl CLI (https://github.com/mminichino/cbctl, >=0.7.0).
+#
+# Two modes:
+#   1. Manifest: a cbctl/v1 `kind: CouchbaseServer` YAML definition applied with
+#      `cbctl apply -f`. Selected by CBS_MANIFEST (file or directory),
+#      CBS_MANIFEST_YAML (inline YAML), or a manifest mounted at /manifest
+#      (couchbase.yaml, couchbase.yml, or a directory of *.yaml / *.yml files).
+#   2. Environment: CBS_* variables drive `cbctl cluster/bucket/scope/collection`.
 set -euo pipefail
 
 log() {
@@ -68,6 +76,50 @@ with_alternate() {
     echo "${spec}#${alternate}"
   fi
 }
+
+# ---------------------------------------------------------------------------
+# Manifest mode: cbctl apply -f (CouchbaseServer YAML definition)
+# ---------------------------------------------------------------------------
+CBS_MANIFEST="${CBS_MANIFEST:-}"
+CBS_MANIFEST_YAML="${CBS_MANIFEST_YAML:-}"
+CBS_MANIFEST_DRY_RUN="${CBS_MANIFEST_DRY_RUN:-false}"
+
+if [[ -n "${CBS_MANIFEST}" && -n "${CBS_MANIFEST_YAML}" ]]; then
+  die "Set only one of CBS_MANIFEST and CBS_MANIFEST_YAML"
+fi
+
+if [[ -z "${CBS_MANIFEST}" && -z "${CBS_MANIFEST_YAML}" ]]; then
+  for candidate in /manifest/couchbase.yaml /manifest/couchbase.yml /manifest; do
+    if [[ -f "${candidate}" ]]; then
+      CBS_MANIFEST="${candidate}"
+      break
+    elif [[ -d "${candidate}" ]] && compgen -G "${candidate}/*.y*ml" > /dev/null; then
+      CBS_MANIFEST="${candidate}"
+      break
+    fi
+  done
+fi
+
+if [[ -n "${CBS_MANIFEST}" || -n "${CBS_MANIFEST_YAML}" ]]; then
+  apply_args=(apply)
+  if is_truthy "${CBS_MANIFEST_DRY_RUN}"; then
+    apply_args+=(--dry-run)
+  fi
+
+  # Manifest passwords are ${VAR}, ${file:PATH} or ${base64:VALUE} references,
+  # so reference CBS_PASSWORD (or a mounted secret file) rather than a literal.
+  if [[ -n "${CBS_MANIFEST_YAML}" ]]; then
+    log "Applying CouchbaseServer manifest from CBS_MANIFEST_YAML"
+    printf '%s\n' "${CBS_MANIFEST_YAML}" | cbctl "${apply_args[@]}" -f -
+  else
+    [[ -e "${CBS_MANIFEST}" ]] || die "CBS_MANIFEST '${CBS_MANIFEST}' does not exist"
+    log "Applying CouchbaseServer manifest '${CBS_MANIFEST}'"
+    cbctl "${apply_args[@]}" -f "${CBS_MANIFEST}"
+  fi
+
+  log "Bootstrap complete"
+  exit 0
+fi
 
 CBS_USERNAME="${CBS_USERNAME:-Administrator}"
 CBS_PASSWORD="${CBS_PASSWORD:-password}"
